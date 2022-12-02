@@ -76,6 +76,31 @@ class LinearFunctionSet:
                                 self.g     : e_y,
                                 self.g_inv : -e_y}
 
+
+class AffineActionGraph:
+    """ Generates a graph of an affine free group over some domain.
+    """
+    
+    def __init__(self, max_steps, function_set, domain):
+    
+        self.funcs = function_set.func_map.keys()
+        self.G = nx.Graph()
+        self.max_steps = max_steps
+        
+        for value in domain:
+            self.iterate(0, value)
+
+    def iterate(self, step, value):
+        
+        if step >= self.max_steps:
+            return
+        
+        for func in self.funcs:
+            new_value = func(value)
+            if is_integer(new_value):
+                self.G.add_edge(value, new_value)
+                self.iterate(step + 1, new_value)
+        
 class CayleyGraph:
     """Defines a cayley graph of a finitely generated free group of two functions and allows
     you to act on the graph by supplying a initial value.
@@ -231,6 +256,10 @@ class CayleyGraph:
         nx.draw_networkx(self.G, pos=pos, node_size=3000, node_color=color,
                          with_labels=with_labels, labels=labels, ax=ax)
     
+    def prop_data_as_list(self, prop_name):
+        props = [n_prop for n, n_prop in self.G.nodes.data(prop_name)]
+        return props
+    
     def export(self, filename):
         
         G_copy = copy.deepcopy(self.G)
@@ -276,6 +305,9 @@ class CayleyAnimator:
                                             interval=300, blit=True)
         
         anim.save('cayley.gif', writer='imagemagick')
+
+def is_integer(x):
+    return int(x) == x
 
 def generate_graph(steps, initial_value, func_map, func_bases, filename):
     
